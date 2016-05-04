@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<style>
+    .cvs{width:600px; height:600px; border-radius: 10px;  position: absolute; background-color: beige;
+        top: 50px;
+        left: 50px; z-index: 100;}
+    .uper{width:700px; height:700px; border-radius: 10px;  z-index: -10 ; background-color: #111111}
+    .cvs2{width:600px; height:600px; border-radius: 10px;  position: absolute; background-color: #fc8c84;
+        top: 50px;
+        left: 50px; z-index: 50;}
+</style>
+<div class="uper">
+    <canvas class="cvs">
+
+    </canvas>
+    <canvas class="cvs2">
+    </canvas>
+</div>
+
+<div>
+    <img src="11.jpg"  id = 'canvasImg'>
+</div>
+<button class="canvasbtn">이미지로 만들기</button>
+<div class="cntdiv">
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    var socket = io();
+    var c = document.querySelector(".cvs");
+    var ctx = c.getContext("2d");
+    var c2 = document.querySelector(".cvs2");
+    var ctx2 = c2.getContext("2d");
+    var drag = false;
+    var clickcnt = 0;
+    var px,py,lx,ly;
+    function drawCircle(x,y) {
+        var c = document.querySelector(".cvs");
+        var ctx = c.getContext("2d");
+        ctx.beginPath();
+        ctx.arc(x,y,10,0,2*Math.PI);
+        ctx.stroke();
+    }
+    function drawCircle2(x,y) {
+        var c = document.querySelector(".cvs");
+        var ctx = c.getContext("2d");
+        ctx.beginPath();
+        ctx.arc(x,y,1,0,2*Math.PI);
+        ctx.stroke();
+    }
+
+    function canvasX(clientX) {
+        var bound = document.querySelector(".cvs").getBoundingClientRect();
+        return (clientX - bound.left) * (document.querySelector(".cvs").width / bound.width);
+    }
+    function canvasX2(clientX) {
+        var bound = document.querySelector(".cvs2").getBoundingClientRect();
+        return (clientX - bound.left) * (document.querySelector(".cvs2").width / bound.width);
+    }
+
+    function canvasY2(clientY) {
+        var bound = document.querySelector(".cvs2").getBoundingClientRect();
+        return (clientY - bound.top) * (document.querySelector(".cvs2").height / bound.height);
+    }
+
+    function canvasY(clientY) {
+        var bound = document.querySelector(".cvs").getBoundingClientRect();
+        return (clientY - bound.top) * (document.querySelector(".cvs").height / bound.height);
+    }
+    function mkimg() {
+        var myImage = document.getElementById('canvasImg');
+        myImage.src = document.querySelector(".cvs2").toDataURL();
+    }
+
+
+    $('.cvs').on('mousedown',function (event) {
+        px = canvasX2(event.clientX);
+        py = canvasY2(event.clientY);
+        drag= true;
+    })
+    $('.cvs').on('mouseup',function (event) {
+
+        drag= false;
+        clickcnt++;
+        ctx2.moveTo(px,py);
+        lx = canvasX2(event.clientX);
+        ly = canvasY2(event.clientY);
+        ctx2.lineTo(lx,ly);
+        ctx2.stroke();
+
+        console.log("횟수  "+clickcnt)
+    })
+
+    $('.cvs').on('mousemove',function (event) {
+        if(drag) {
+            var x = canvasX(event.clientX);
+            var y = canvasY(event.clientY);
+            drawCircle2( x, y );
+        }
+    })
+    $('.canvasbtn').on('click',function (event) {
+        socket.emit('cntmsg',clickcnt);
+        mkimg();
+    })
+    socket.on('result', function(msg){
+        console.log(msg.xpos);
+        console.log(msg.ypos);
+        drawCircle(msg.xpos,msg.ypos);
+    });
+    socket.on('dragresult', function(msg){
+        console.log(msg.xpos);
+        console.log(msg.ypos);
+        drawCircle2(msg.xpos,msg.ypos);
+    });
+    socket.on('cntresult', function(msg){
+        console.log(msg);
+        $('.cntdiv').html("");
+        var divhtml = ""
+        for(var i = 0; i<msg.length; i++) {
+            divhtml = divhtml + '<div><a>' + msg[i] + '</a></div>';
+        }
+        $('.cntdiv').html(divhtml);
+    });
+
+
+</script>
+
+</body>
+</html>

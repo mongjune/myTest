@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.hanja.persistence.writeMapper">	
+
+	<select id="getNow" resultType="string">
+		select to_char(sysdate) from dual
+	</select>
+		
+	<select id="getHanja" resultType="org.hanja.domain.HanjaVO">
+		<![CDATA[
+		select CHINESETEXT, MEANTEXT, WRITECOUNT from TBL_CHINESECHAR 
+		where WRITECOUNT > #{wNum}-2 and WRITECOUNT < #{wNum}+2 and GRADE=80 and rownum<=12
+		]]>
+	</select>
+	
+	
+    
+</mapper>
+	
